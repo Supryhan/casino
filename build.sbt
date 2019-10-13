@@ -1,4 +1,4 @@
-name := "webcookies"
+name := "casino"
 
 version := "0.1"
 

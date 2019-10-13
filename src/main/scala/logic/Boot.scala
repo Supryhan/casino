@@ -31,11 +31,12 @@ object Boot extends App {
   val route: Route =
     path("push") {
       optionalCookie("userName") {
-        case Some(v) if users.contains(UUID.fromString(v.value)) => get { ctx =>
-          val userId = UUID.fromString(v.value)
-          users += (userId -> process(users(userId)))
-          ctx.complete(Future(s"Your balance is: ${users(userId)._1}, your bet is: ${users(userId)._2}"))
-        }
+        case Some(v) if users.contains(UUID.fromString(v.value)) =>
+          get { ctx =>
+            val userId = UUID.fromString(v.value)
+            users += (userId -> process(users(userId)))
+            ctx.complete(Future(s"Your balance is: ${users(userId)._1}, your bet is: ${users(userId)._2}"))
+          }
         case _ =>
           val uuid = UUID.randomUUID()
           setCookie(HttpCookie("userName", value = uuid.toString)) {
