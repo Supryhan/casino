@@ -3,8 +3,7 @@ package logic
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.server.RouteResult
-import akka.http.scaladsl.server.{RequestContext, Route}
+import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.server.Directives._
@@ -15,54 +14,44 @@ import scala.io.StdIn
 
 object Boot extends App {
 
-  implicit val system: ActorSystem = ActorSystem("my-system")
+  implicit val system: ActorSystem = ActorSystem("my-casino-system")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
-  // needed for the future flatMap/onComplete in the end
   implicit val executionContext: ExecutionContextExecutor = system.dispatcher
-  type Bet = Int
   type UserId = UUID
 
-  val users: Map[UserId, Bet] = Map.empty
+  var users: Map[UserId, (Int, Int, Double)] = Map.empty
 
-  def d(rc: RequestContext): Future[RouteResult] = rc.complete(Future("_"))
+  def process(in: (Int, Int, Double)): (Int, Int, Double) = {
+    val (balance, bet, probability) = in
+    val r = new scala.util.Random(100)
+    val win = if (r.nextFloat * 100 < probability) bet else 0
+    (balance - bet + win, bet + 5, probability - probability / 100)
+  }
 
   val route: Route =
-    path("put1" / IntNumber) { id =>
+    path("push") {
       optionalCookie("userName") {
-        case Some(v) => get {
-          d
+        case Some(v) if users.contains(UUID.fromString(v.value)) => get { ctx =>
+          val userId = UUID.fromString(v.value)
+          users += (userId -> process(users(userId)))
+          ctx.complete(Future(s"Your balance is: ${users(userId)._1}, your bet is: ${users(userId)._2}"))
         }
-        case None => get {
-          d
-        }
-      }
-    } ~
-      path("put2") {
-        get {
-          optionalCookie("userName") { nameCookie =>
-            complete(s"The logged in user is '${nameCookie.get.value}'")
+        case _ =>
+          val uuid = UUID.randomUUID()
+          setCookie(HttpCookie("userName", value = uuid.toString)) {
+            get { ctx =>
+              users += (uuid -> process((100, 10, 2.0)))
+              ctx.complete(Future(s"Your balance is: ${users(uuid)._1}, your bet is: ${users(uuid)._2}"))
+            }
           }
-        }
-      } ~
-      path("put3") {
-        get { ctx =>
-          ctx.complete(s"The HTTP method is '${ctx.request.method}'")
-        }
-      } ~
-      path("put0") {
-        get {
-          setCookie(HttpCookie("userName", value = "paul")) {
-            complete("The user was logged in")
-          }
-          //          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>OK, no cookie</h1>"))
-        }
       }
+    }
 
   val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
 
   println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
-  StdIn.readLine() // let it run until user presses return
+  StdIn.readLine()
   bindingFuture
-    .flatMap(_.unbind()) // trigger unbinding from the port
-    .onComplete(_ => system.terminate()) // and shutdown when done
+    .flatMap(_.unbind())
+    .onComplete(_ => system.terminate())
 }
