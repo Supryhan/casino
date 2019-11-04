@@ -8,6 +8,8 @@ sbtVersion := "1.3.2"
 
 scalaVersion := "2.13.1"
 
+resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
+
 val AkkaVersion = "2.5.23"
 val AkkaHttpVersion = "10.1.10"
 
@@ -18,6 +20,7 @@ libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion % Test,
     "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % Test,
     "org.scalatest" %% "scalatest-wordspec" % "3.2.0-M1",
-    "org.scalatest" %% "scalatest" % "3.0.8",
+    "org.scalatest" %% "scalatest" % "3.0.8" % Test,
+    "org.scalactic" %% "scalactic" % "3.0.8",
     "org.specs2" %% "specs2-core" % "4.5.1",
 )
