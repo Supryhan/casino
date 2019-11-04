@@ -2,8 +2,7 @@ import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes._
 import org.specs2.Specification
-import org.specs2.specification.core.SpecStructure
-import akka.http.scaladsl.testkit.{ScalatestRouteTest, Specs2RouteTest}
+import akka.http.scaladsl.testkit.{ScalatestRouteTest, Specs2RouteTest, _}
 import logic.Boot
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, WordSpec, _}
